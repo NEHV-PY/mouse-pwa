@@ -1,0 +1,164 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mouse Táctil PWA</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            touch-action: none;
+        }
+        body {
+            margin: 0;
+            background-color: #121212;
+            color: #ffffff;
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #estado {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #ff4444;
+        }
+        #touchpad {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            border: 2px dashed #333;
+            margin: 50px 10px 10px 10px;
+            border-radius: 12px;
+            color: #888;
+            font-size: 1.1rem;
+        }
+        #botones {
+            display: flex;
+            height: 70px;
+            margin: 0 10px 10px 10px;
+            gap: 10px;
+        }
+        .btn {
+            flex: 1;
+            background-color: #222;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #aaa;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        .btn:active {
+            background-color: #444;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div id="estado">(Conectando...)</div>
+    <div id="touchpad">Desliza (1 dedo) | Scroll (2 dedos)</div>
+    
+    <div id="botones">
+        <div id="btn-izq" class="btn">Clic Izq</div>
+        <div id="btn-der" class="btn">Clic Der</div>
+    </div>
+
+    <script>
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const socket = new WebSocket(`${wsProtocol}//${window.location.host}/ws/mouse`);
+
+        const estadoDiv = document.getElementById('estado');
+
+        socket.onopen = () => {
+            estadoDiv.innerText = "(Conectado ✓)";
+            estadoDiv.style.color = "#00ff88";
+        };
+
+        socket.onerror = () => {
+            estadoDiv.innerText = "(Error de Conexión)";
+            estadoDiv.style.color = "#ff4444";
+        };
+
+        socket.onclose = () => {
+            estadoDiv.innerText = "(Desconectado)";
+            estadoDiv.style.color = "#ff4444";
+        };
+
+        // Multiplicador de velocidad (Sensibilidad)
+        const sensibilidad = 2.5;
+
+        let ultima_posicion_x = 0;
+        let ultima_posicion_y = 0;
+        let inicio_movimiento = false;
+
+        const zona_tactil = document.getElementById('touchpad');
+
+        zona_tactil.addEventListener('touchstart', (evento) => {
+            if (evento.touches.length === 1) {
+                ultima_posicion_x = evento.touches[0].clientX;
+                ultima_posicion_y = evento.touches[0].clientY;
+                inicio_movimiento = false;
+            } else if (evento.touches.length === 2) {
+                ultima_posicion_y = (evento.touches[0].clientY + evento.touches[1].clientY) / 2;
+            }
+        });
+
+        zona_tactil.addEventListener('touchmove', (evento) => {
+            if (socket.readyState !== WebSocket.OPEN) return;
+
+            // Movimiento con 1 dedo
+            if (evento.touches.length === 1) {
+                inicio_movimiento = true;
+                let pos_x = evento.touches[0].clientX;
+                let pos_y = evento.touches[0].clientY;
+
+                let delta_x = (pos_x - ultima_posicion_x) * sensibilidad;
+                let delta_y = (pos_y - ultima_posicion_y) * sensibilidad;
+
+                ultima_posicion_x = pos_x;
+                ultima_posicion_y = pos_y;
+
+                socket.send(JSON.stringify({ "type": "move", "dx": delta_x, "dy": delta_y }));
+            }
+            // Scroll con 2 dedos
+            else if (evento.touches.length === 2) {
+                let pos_y = (evento.touches[0].clientY + evento.touches[1].clientY) / 2;
+                let delta_scroll = (ultima_posicion_y - pos_y) * 2;
+                ultima_posicion_y = pos_y;
+
+                socket.send(JSON.stringify({ "type": "scroll", "dy": delta_scroll }));
+            }
+        });
+
+        zona_tactil.addEventListener('touchend', (evento) => {
+            if (!inicio_movimiento && evento.touches.length === 0 && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ "type": "click", "button": "left" }));
+            }
+        });
+
+        // Botones de clic físico
+        document.getElementById('btn-izq').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ "type": "click", "button": "left" }));
+            }
+        });
+
+        document.getElementById('btn-der').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ "type": "click", "button": "right" }));
+            }
+        });
+    </script>
+</body>
+</html>
