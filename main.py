@@ -4,6 +4,8 @@ import pyautogui
 
 app = FastAPI()
 
+# Eliminamos cualquier pausa o freno por defecto para ejecución inmediata
+pyautogui.PAUSE = 0
 pyautogui.FAILSAFE = False
 
 @app.get("/")

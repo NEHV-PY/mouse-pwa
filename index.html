@@ -11,7 +11,7 @@
         }
         body {
             margin: 0;
-            background-color: #121212;
+            background-color: #0d0d0d;
             color: #ffffff;
             font-family: system-ui, -apple-system, sans-serif;
             overflow: hidden;
@@ -33,10 +33,10 @@
             align-items: center;
             justify-content: center;
             user-select: none;
-            border: 2px dashed #333;
+            border: 2px dashed #2a2a2a;
             margin: 50px 10px 10px 10px;
             border-radius: 12px;
-            color: #888;
+            color: #666;
             font-size: 1.1rem;
         }
         #botones {
@@ -47,8 +47,8 @@
         }
         .btn {
             flex: 1;
-            background-color: #222;
-            border: 1px solid #444;
+            background-color: #1c1c1e;
+            border: 1px solid #333;
             border-radius: 8px;
             color: #aaa;
             font-size: 1rem;
@@ -58,7 +58,7 @@
             user-select: none;
         }
         .btn:active {
-            background-color: #444;
+            background-color: #007aff;
             color: #fff;
         }
     </style>
@@ -84,7 +84,7 @@
         };
 
         socket.onerror = () => {
-            estadoDiv.innerText = "(Error de Conexión)";
+            estadoDiv.innerText = "(Error)";
             estadoDiv.style.color = "#ff4444";
         };
 
@@ -93,14 +93,22 @@
             estadoDiv.style.color = "#ff4444";
         };
 
-        // Multiplicador de velocidad (Sensibilidad)
-        const sensibilidad = 2.5;
+        // Sensibilidad acelerada
+        const sensibilidad = 3.8;
 
         let ultima_posicion_x = 0;
         let ultima_posicion_y = 0;
         let inicio_movimiento = false;
+        let en_proceso_frame = false;
 
         const zona_tactil = document.getElementById('touchpad');
+
+        // Función de vibración sutil (si el celular lo soporta)
+        function vibrarSutil() {
+            if (navigator.vibrate) {
+                navigator.vibrate(12);
+            }
+        }
 
         zona_tactil.addEventListener('touchstart', (evento) => {
             if (evento.touches.length === 1) {
@@ -113,41 +121,43 @@
         });
 
         zona_tactil.addEventListener('touchmove', (evento) => {
-            if (socket.readyState !== WebSocket.OPEN) return;
+            if (socket.readyState !== WebSocket.OPEN || en_proceso_frame) return;
 
-            // Movimiento con 1 dedo
-            if (evento.touches.length === 1) {
-                inicio_movimiento = true;
-                let pos_x = evento.touches[0].clientX;
-                let pos_y = evento.touches[0].clientY;
+            en_proceso_frame = true;
+            requestAnimationFrame(() => {
+                if (evento.touches.length === 1) {
+                    inicio_movimiento = true;
+                    let pos_x = evento.touches[0].clientX;
+                    let pos_y = evento.touches[0].clientY;
 
-                let delta_x = (pos_x - ultima_posicion_x) * sensibilidad;
-                let delta_y = (pos_y - ultima_posicion_y) * sensibilidad;
+                    let delta_x = (pos_x - ultima_posicion_x) * sensibilidad;
+                    let delta_y = (pos_y - ultima_posicion_y) * sensibilidad;
 
-                ultima_posicion_x = pos_x;
-                ultima_posicion_y = pos_y;
+                    ultima_posicion_x = pos_x;
+                    ultima_posicion_y = pos_y;
 
-                socket.send(JSON.stringify({ "type": "move", "dx": delta_x, "dy": delta_y }));
-            }
-            // Scroll con 2 dedos
-            else if (evento.touches.length === 2) {
-                let pos_y = (evento.touches[0].clientY + evento.touches[1].clientY) / 2;
-                let delta_scroll = (ultima_posicion_y - pos_y) * 2;
-                ultima_posicion_y = pos_y;
+                    socket.send(JSON.stringify({ "type": "move", "dx": delta_x, "dy": delta_y }));
+                } else if (evento.touches.length === 2) {
+                    let pos_y = (evento.touches[0].clientY + evento.touches[1].clientY) / 2;
+                    let delta_scroll = (ultima_posicion_y - pos_y) * 2.5;
+                    ultima_posicion_y = pos_y;
 
-                socket.send(JSON.stringify({ "type": "scroll", "dy": delta_scroll }));
-            }
+                    socket.send(JSON.stringify({ "type": "scroll", "dy": delta_scroll }));
+                }
+                en_proceso_frame = false;
+            });
         });
 
         zona_tactil.addEventListener('touchend', (evento) => {
             if (!inicio_movimiento && evento.touches.length === 0 && socket.readyState === WebSocket.OPEN) {
+                vibrarSutil();
                 socket.send(JSON.stringify({ "type": "click", "button": "left" }));
             }
         });
 
-        // Botones de clic físico
         document.getElementById('btn-izq').addEventListener('touchstart', (e) => {
             e.preventDefault();
+            vibrarSutil();
             if (socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ "type": "click", "button": "left" }));
             }
@@ -155,6 +165,7 @@
 
         document.getElementById('btn-der').addEventListener('touchstart', (e) => {
             e.preventDefault();
+            vibrarSutil();
             if (socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ "type": "click", "button": "right" }));
             }
