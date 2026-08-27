@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0d0d0d">
     <title>Mouse Táctil PWA</title>
     <style>
         * {
@@ -73,6 +75,10 @@
     </div>
 
     <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const socket = new WebSocket(`${wsProtocol}//${window.location.host}/ws/mouse`);
 
@@ -93,9 +99,7 @@
             estadoDiv.style.color = "#ff4444";
         };
 
-        // Sensibilidad acelerada
         const sensibilidad = 3.8;
-
         let ultima_posicion_x = 0;
         let ultima_posicion_y = 0;
         let inicio_movimiento = false;
@@ -103,7 +107,6 @@
 
         const zona_tactil = document.getElementById('touchpad');
 
-        // Función de vibración sutil (si el celular lo soporta)
         function vibrarSutil() {
             if (navigator.vibrate) {
                 navigator.vibrate(12);

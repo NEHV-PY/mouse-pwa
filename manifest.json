@@ -1,0 +1,16 @@
+﻿{
+  "short_name": "Mouse PWA",
+  "name": "Mouse Táctil PWA",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/681/681392.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "display": "standalone",
+  "orientation": "portrait"
+}

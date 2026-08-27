@@ -1,10 +1,9 @@
 ﻿from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 import pyautogui
 
 app = FastAPI()
 
-# Eliminamos cualquier pausa o freno por defecto para ejecución inmediata
 pyautogui.PAUSE = 0
 pyautogui.FAILSAFE = False
 
@@ -12,6 +11,14 @@ pyautogui.FAILSAFE = False
 async def get():
     with open("index.html", "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
+
+@app.get("/manifest.json")
+async def manifest():
+    return FileResponse("manifest.json")
+
+@app.get("/service-worker.js")
+async def service_worker():
+    return FileResponse("service-worker.js")
 
 @app.websocket("/ws/mouse")
 async def websocket_mouse_endpoint(websocket: WebSocket):
