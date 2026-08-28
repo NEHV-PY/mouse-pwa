@@ -30,25 +30,34 @@
             color: #ff4444;
             z-index: 5;
         }
-        #btn-teclado {
+        #top-bar {
             position: absolute;
             top: 10px;
             right: 15px;
-            background-color: #007aff;
-            color: #fff;
-            border: none;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            font-size: 1.2rem;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0, 122, 255, 0.4);
+            gap: 10px;
             z-index: 10;
         }
-        #btn-teclado:active {
-            transform: scale(0.92);
+        .btn-top {
+            background-color: #1c1c1e;
+            color: #fff;
+            border: 1px solid #333;
+            border-radius: 20px;
+            padding: 8px 14px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+        .btn-top:active {
+            transform: scale(0.95);
+        }
+        #btn-drag.activo {
+            background-color: #ff9500;
+            border-color: #ff9500;
+            color: #000;
+            font-weight: bold;
         }
         #touchpad {
             flex: 1;
@@ -60,7 +69,9 @@
             margin: 65px 10px 10px 10px;
             border-radius: 12px;
             color: #666;
-            font-size: 1.1rem;
+            font-size: 1rem;
+            text-align: center;
+            padding: 20px;
             z-index: 1;
         }
         #botones {
@@ -100,11 +111,15 @@
 </head>
 <body>
     <div id="estado">(Conectando...)</div>
-    <button id="btn-teclado">⌨️</button>
+
+    <div id="top-bar">
+        <button id="btn-drag" class="btn-top">🔓 Mover</button>
+        <button id="btn-teclado" class="btn-top">⌨️</button>
+    </div>
     
     <input type="text" id="input-remoto" autocomplete="off" />
 
-    <div id="touchpad">Desliza (1 dedo) | Scroll (2 dedos)</div>
+    <div id="touchpad">Desliza (1 dedo)<br>Scroll (2 dedos)<br>Háptico Reforzado 📳</div>
     
     <div id="botones">
         <div id="btn-izq" class="btn">Clic Izq</div>
@@ -118,6 +133,27 @@
         const estadoDiv = document.getElementById('estado');
         const inputRemoto = document.getElementById('input-remoto');
         const btnTeclado = document.getElementById('btn-teclado');
+        const btnDrag = document.getElementById('btn-drag');
+
+        let modo_enganchado = false;
+
+        function vibrar(patron) {
+            if ("vibrate" in navigator) {
+                try {
+                    navigator.vibrate(patron);
+                } catch (e) {
+                    console.log("Vibración bloqueada:", e);
+                }
+            }
+        }
+
+        // PATRONES REFORZADOS
+        const haptico = {
+            agarre: () => vibrar([80, 40, 100]), // Enganche doble, firme y marcado
+            suelte: () => vibrar(90),            // Pulso seco de 90ms para garantizar lectura
+            clic: () => vibrar(50),              // Clic definido
+            tecla: () => vibrar(30)              // Teclado
+        };
 
         socket.onopen = () => {
             estadoDiv.innerText = "(Conectado ✓)";
@@ -136,14 +172,35 @@
 
         btnTeclado.addEventListener('click', (e) => {
             e.preventDefault();
-            vibrarSutil();
+            haptico.tecla();
             inputRemoto.focus();
+        });
+
+        // CONTROL DE AGARRE Y SOLTAR CON VIBRACIÓN GARANTIZADA
+        btnDrag.addEventListener('click', (e) => {
+            e.preventDefault();
+            modo_enganchado = !modo_enganchado;
+
+            if (socket.readyState === WebSocket.OPEN) {
+                if (modo_enganchado) {
+                    haptico.agarre(); // Sientes el enganche fuerte
+                    socket.send(JSON.stringify({ "type": "down" }));
+                    btnDrag.innerText = "🔒 Soltar";
+                    btnDrag.classList.add("activo");
+                } else {
+                    haptico.suelte(); // Sientes claramente cuando suelta
+                    socket.send(JSON.stringify({ "type": "up" }));
+                    btnDrag.innerText = "🔓 Mover";
+                    btnDrag.classList.remove("activo");
+                }
+            }
         });
 
         inputRemoto.addEventListener('input', (evento) => {
             if (socket.readyState !== WebSocket.OPEN) return;
             const valor = evento.target.value;
             if (valor.length > 0) {
+                haptico.tecla();
                 socket.send(JSON.stringify({ "type": "text", "text": valor }));
                 inputRemoto.value = "";
             }
@@ -152,8 +209,10 @@
         inputRemoto.addEventListener('keydown', (evento) => {
             if (socket.readyState !== WebSocket.OPEN) return;
             if (evento.key === "Backspace") {
+                haptico.tecla();
                 socket.send(JSON.stringify({ "type": "key", "key": "backspace" }));
             } else if (evento.key === "Enter") {
+                haptico.tecla();
                 socket.send(JSON.stringify({ "type": "key", "key": "enter" }));
             }
         });
@@ -165,12 +224,6 @@
         let en_proceso_frame = false;
 
         const zona_tactil = document.getElementById('touchpad');
-
-        function vibrarSutil() {
-            if (navigator.vibrate) {
-                navigator.vibrate(12);
-            }
-        }
 
         zona_tactil.addEventListener('touchstart', (evento) => {
             if (evento.touches.length === 1) {
@@ -211,15 +264,15 @@
         });
 
         zona_tactil.addEventListener('touchend', (evento) => {
-            if (!inicio_movimiento && evento.touches.length === 0 && socket.readyState === WebSocket.OPEN) {
-                vibrarSutil();
+            if (!inicio_movimiento && evento.touches.length === 0 && socket.readyState === WebSocket.OPEN && !modo_enganchado) {
+                haptico.clic();
                 socket.send(JSON.stringify({ "type": "click", "button": "left" }));
             }
         });
 
         document.getElementById('btn-izq').addEventListener('touchstart', (e) => {
             e.preventDefault();
-            vibrarSutil();
+            haptico.clic();
             if (socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ "type": "click", "button": "left" }));
             }
@@ -227,7 +280,7 @@
 
         document.getElementById('btn-der').addEventListener('touchstart', (e) => {
             e.preventDefault();
-            vibrarSutil();
+            haptico.clic();
             if (socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ "type": "click", "button": "right" }));
             }
