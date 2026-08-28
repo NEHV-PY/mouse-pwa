@@ -16,13 +16,10 @@ async def get():
 async def manifest():
     return FileResponse("manifest.json")
 
-@app.get("/service-worker.js")
-async def service_worker():
-    return FileResponse("service-worker.js")
-
 @app.websocket("/ws/mouse")
 async def websocket_mouse_endpoint(websocket: WebSocket):
     await websocket.accept()
+    print("-> ¡Celular Conectado al WebSocket!")
     try:
         while True:
             data = await websocket.receive_json()
@@ -41,5 +38,17 @@ async def websocket_mouse_endpoint(websocket: WebSocket):
                 delta_y = data.get("dy", 0)
                 pyautogui.scroll(int(delta_y))
 
+            elif tipo_evento == "text":
+                texto = data.get("text", "")
+                if texto:
+                    pyautogui.write(texto)
+
+            elif tipo_evento == "key":
+                key = data.get("key", "")
+                if key == "backspace":
+                    pyautogui.press("backspace")
+                elif key == "enter":
+                    pyautogui.press("enter")
+
     except WebSocketDisconnect:
-        print("(estado_conexion = Desconectado)")
+        print("-> Celular Desconectado")

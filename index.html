@@ -28,6 +28,27 @@
             font-size: 0.85rem;
             font-weight: bold;
             color: #ff4444;
+            z-index: 5;
+        }
+        #btn-teclado {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background-color: #007aff;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 122, 255, 0.4);
+            z-index: 10;
+        }
+        #btn-teclado:active {
+            transform: scale(0.92);
         }
         #touchpad {
             flex: 1;
@@ -36,16 +57,18 @@
             justify-content: center;
             user-select: none;
             border: 2px dashed #2a2a2a;
-            margin: 50px 10px 10px 10px;
+            margin: 65px 10px 10px 10px;
             border-radius: 12px;
             color: #666;
             font-size: 1.1rem;
+            z-index: 1;
         }
         #botones {
             display: flex;
             height: 70px;
             margin: 0 10px 10px 10px;
             gap: 10px;
+            z-index: 5;
         }
         .btn {
             flex: 1;
@@ -63,10 +86,24 @@
             background-color: #007aff;
             color: #fff;
         }
+        #input-remoto {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            top: 0;
+            left: 0;
+            width: 1px;
+            height: 1px;
+            z-index: -1;
+        }
     </style>
 </head>
 <body>
     <div id="estado">(Conectando...)</div>
+    <button id="btn-teclado">⌨️</button>
+    
+    <input type="text" id="input-remoto" autocomplete="off" />
+
     <div id="touchpad">Desliza (1 dedo) | Scroll (2 dedos)</div>
     
     <div id="botones">
@@ -75,14 +112,12 @@
     </div>
 
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js');
-        }
-
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const socket = new WebSocket(`${wsProtocol}//${window.location.host}/ws/mouse`);
 
         const estadoDiv = document.getElementById('estado');
+        const inputRemoto = document.getElementById('input-remoto');
+        const btnTeclado = document.getElementById('btn-teclado');
 
         socket.onopen = () => {
             estadoDiv.innerText = "(Conectado ✓)";
@@ -98,6 +133,30 @@
             estadoDiv.innerText = "(Desconectado)";
             estadoDiv.style.color = "#ff4444";
         };
+
+        btnTeclado.addEventListener('click', (e) => {
+            e.preventDefault();
+            vibrarSutil();
+            inputRemoto.focus();
+        });
+
+        inputRemoto.addEventListener('input', (evento) => {
+            if (socket.readyState !== WebSocket.OPEN) return;
+            const valor = evento.target.value;
+            if (valor.length > 0) {
+                socket.send(JSON.stringify({ "type": "text", "text": valor }));
+                inputRemoto.value = "";
+            }
+        });
+
+        inputRemoto.addEventListener('keydown', (evento) => {
+            if (socket.readyState !== WebSocket.OPEN) return;
+            if (evento.key === "Backspace") {
+                socket.send(JSON.stringify({ "type": "key", "key": "backspace" }));
+            } else if (evento.key === "Enter") {
+                socket.send(JSON.stringify({ "type": "key", "key": "enter" }));
+            }
+        });
 
         const sensibilidad = 3.8;
         let ultima_posicion_x = 0;
