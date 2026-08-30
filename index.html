@@ -4,18 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#0d0d0d">
-    <title>Mouse Táctil PWA</title>
+    <meta name="theme-color" content="#050b14">
+    <title>Mouse Táctil Marciano PWA</title>
     <style>
         * {
             box-sizing: border-box;
             touch-action: none;
+            user-select: none;
         }
         body {
             margin: 0;
-            background-color: #0d0d0d;
-            color: #ffffff;
-            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #050b14;
+            color: #00ffcc;
+            font-family: 'Segoe UI', Roboto, monospace;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -24,39 +25,44 @@
         #estado {
             position: absolute;
             top: 15px;
-            left: 20px;
-            font-size: 0.85rem;
+            left: 15px;
+            font-size: 0.75rem;
             font-weight: bold;
-            color: #ff4444;
+            color: #ff3366;
+            text-shadow: 0 0 5px #ff3366;
             z-index: 5;
+            letter-spacing: 1px;
         }
         #top-bar {
             position: absolute;
             top: 10px;
             right: 15px;
             display: flex;
-            gap: 10px;
+            gap: 8px;
             z-index: 10;
         }
         .btn-top {
-            background-color: #1c1c1e;
-            color: #fff;
-            border: 1px solid #333;
-            border-radius: 20px;
-            padding: 8px 14px;
-            font-size: 0.9rem;
+            background: rgba(10, 25, 47, 0.8);
+            color: #00ffcc;
+            border: 1px solid #00ffcc;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
             display: flex;
             align-items: center;
-            gap: 6px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 8px rgba(0, 255, 204, 0.3);
+            transition: all 0.2s ease;
         }
         .btn-top:active {
-            transform: scale(0.95);
+            transform: scale(0.92);
+            background: #00ffcc;
+            color: #050b14;
         }
         #btn-drag.activo {
-            background-color: #ff9500;
-            border-color: #ff9500;
-            color: #000;
+            background-color: #ff0055;
+            border-color: #ff0055;
+            color: #fff;
+            box-shadow: 0 0 12px #ff0055;
             font-weight: bold;
         }
         #touchpad {
@@ -64,38 +70,147 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            user-select: none;
-            border: 2px dashed #2a2a2a;
-            margin: 65px 10px 10px 10px;
-            border-radius: 12px;
-            color: #666;
-            font-size: 1rem;
-            text-align: center;
-            padding: 20px;
+            position: relative;
+            border: 2px solid #00ffcc;
+            margin: 55px 12px 8px 12px;
+            border-radius: 16px;
+            background: radial-gradient(circle, rgba(0,255,204,0.05) 0%, rgba(5,11,20,0.95) 100%);
+            box-shadow: inset 0 0 15px rgba(0, 255, 204, 0.2), 0 0 10px rgba(0, 255, 204, 0.15);
             z-index: 1;
+            overflow: hidden;
+        }
+        .silueta-mouse {
+            position: absolute;
+            width: 140px;
+            height: 220px;
+            border: 2px dashed rgba(0, 255, 204, 0.25);
+            border-radius: 70px 70px 50px 50px;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .silueta-linea {
+            width: 100%;
+            height: 70px;
+            border-bottom: 1px dashed rgba(0, 255, 204, 0.2);
+        }
+        .silueta-rueda {
+            width: 12px;
+            height: 28px;
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            border-radius: 6px;
+            margin-top: -14px;
+            background: rgba(0, 255, 204, 0.05);
+        }
+        #touchpad-texto {
+            color: rgba(0, 255, 204, 0.5);
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 40px;
+            letter-spacing: 1px;
+            pointer-events: none;
+        }
+        #media-bar {
+            display: flex;
+            height: 44px;
+            margin: 0 12px 8px 12px;
+            gap: 6px;
+            z-index: 5;
+        }
+        .btn-media {
+            flex: 1;
+            background: rgba(10, 25, 47, 0.9);
+            border: 1px solid rgba(0, 255, 204, 0.4);
+            border-radius: 8px;
+            color: #00ffcc;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 5px rgba(0, 255, 204, 0.1);
+        }
+        .btn-media:active {
+            background: #00ffcc;
+            color: #050b14;
         }
         #botones {
             display: flex;
-            height: 70px;
-            margin: 0 10px 10px 10px;
-            gap: 10px;
+            height: 60px;
+            margin: 0 12px 12px 12px;
+            gap: 8px;
             z-index: 5;
         }
         .btn {
             flex: 1;
-            background-color: #1c1c1e;
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: #aaa;
-            font-size: 1rem;
+            background: rgba(10, 25, 47, 0.9);
+            border: 1px solid #00ffcc;
+            border-radius: 10px;
+            color: #00ffcc;
+            font-size: 0.9rem;
+            font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
-            user-select: none;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+            letter-spacing: 1px;
         }
         .btn:active {
-            background-color: #007aff;
-            color: #fff;
+            background-color: #00ffcc;
+            color: #050b14;
+            box-shadow: 0 0 15px #00ffcc;
+        }
+        #modal-instrucciones {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(5, 11, 20, 0.92);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-contenido {
+            background: #0a192f;
+            border: 2px solid #00ffcc;
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 350px;
+            width: 100%;
+            box-shadow: 0 0 25px rgba(0, 255, 204, 0.4);
+            color: #ffffff;
+        }
+        .modal-contenido h3 {
+            color: #00ffcc;
+            margin-top: 0;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.3);
+            padding-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        .modal-contenido ul {
+            padding-left: 18px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #d0f0ff;
+        }
+        .modal-contenido li {
+            margin-bottom: 8px;
+        }
+        #btn-cerrar-modal {
+            width: 100%;
+            background: #00ffcc;
+            color: #050b14;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-top: 10px;
         }
         #input-remoto {
             position: absolute;
@@ -110,20 +225,55 @@
     </style>
 </head>
 <body>
-    <div id="estado">(Conectando...)</div>
+    <div id="estado">[SYSTEM_CONNECTING]</div>
 
     <div id="top-bar">
+        <button id="btn-ayuda" class="btn-top">❓ Help</button>
         <button id="btn-drag" class="btn-top">🔓 Mover</button>
         <button id="btn-teclado" class="btn-top">⌨️</button>
     </div>
     
     <input type="text" id="input-remoto" autocomplete="off" />
 
-    <div id="touchpad">Desliza (1 dedo)<br>Scroll (2 dedos)<br>Háptico Reforzado 📳</div>
+    <div id="touchpad">
+        <div class="silueta-mouse">
+            <div class="silueta-linea"></div>
+            <div class="silueta-rueda"></div>
+        </div>
+        <div id="touchpad-texto">
+            [ TOUCH AREA ]<br>
+            • 1 Dedo: Mover Cursor<br>
+            • 2 Dedos: Scroll<br>
+            • 🔒 Mover: Enganchar Ventana
+        </div>
+    </div>
+
+    <div id="media-bar">
+        <button class="btn-media" data-action="volumedown">🔉</button>
+        <button class="btn-media" data-action="volumeup">🔊</button>
+        <button class="btn-media" data-action="volumemute">🔇</button>
+        <button class="btn-media" data-action="prevtrack">⏮️</button>
+        <button class="btn-media" data-action="playpause">⏯️</button>
+        <button class="btn-media" data-action="nexttrack">⏭️</button>
+    </div>
     
     <div id="botones">
-        <div id="btn-izq" class="btn">Clic Izq</div>
-        <div id="btn-der" class="btn">Clic Der</div>
+        <div id="btn-izq" class="btn">CLIC IZQ</div>
+        <div id="btn-der" class="btn">CLIC DER</div>
+    </div>
+
+    <div id="modal-instrucciones">
+        <div class="modal-contenido">
+            <h3>🛸 GUÍA DE USO MARCIANA</h3>
+            <ul>
+                <li><b>Navegar:</b> Desliza un dedo dentro del recuadro neón para mover el cursor.</li>
+                <li><b>Desplazar (Scroll):</b> Arrastra dos dedos simultáneamente hacia arriba o abajo.</li>
+                <li><b>Enganchar Ventana:</b> Ubica el cursor en la ventana y toca <b>🔓 Mover</b>. Sentirás un pulso háptico doble de enganche. Desplaza y toca <b>🔒 Soltar</b>.</li>
+                <li><b>Escribir:</b> Toca el botón ⌨️ para activar el teclado flotante.</li>
+                <li><b>Multimedia:</b> Controla reproducción y volumen directamente con los botones inferiores.</li>
+            </ul>
+            <button id="btn-cerrar-modal">ENTENDIDO [OK]</button>
+        </div>
     </div>
 
     <script>
@@ -134,6 +284,9 @@
         const inputRemoto = document.getElementById('input-remoto');
         const btnTeclado = document.getElementById('btn-teclado');
         const btnDrag = document.getElementById('btn-drag');
+        const btnAyuda = document.getElementById('btn-ayuda');
+        const modalInstrucciones = document.getElementById('modal-instrucciones');
+        const btnCerrarModal = document.getElementById('btn-cerrar-modal');
 
         let modo_enganchado = false;
 
@@ -142,58 +295,86 @@
                 try {
                     navigator.vibrate(patron);
                 } catch (e) {
-                    console.log("Vibración bloqueada:", e);
+                    console.log("Error de vibración:", e);
                 }
             }
         }
 
-        // PATRONES REFORZADOS
         const haptico = {
-            agarre: () => vibrar([80, 40, 100]), // Enganche doble, firme y marcado
-            suelte: () => vibrar(90),            // Pulso seco de 90ms para garantizar lectura
-            clic: () => vibrar(50),              // Clic definido
-            tecla: () => vibrar(30)              // Teclado
+            agarre: () => vibrar([100, 50, 100]),
+            suelte: () => vibrar(100),
+            clic: () => vibrar(60),
+            tecla: () => vibrar(40)
         };
 
         socket.onopen = () => {
-            estadoDiv.innerText = "(Conectado ✓)";
-            estadoDiv.style.color = "#00ff88";
+            estadoDiv.innerText = "[ONLINE ✓]";
+            estadoDiv.style.color = "#00ffcc";
+            estadoDiv.style.textShadow = "0 0 8px #00ffcc";
         };
 
         socket.onerror = () => {
-            estadoDiv.innerText = "(Error)";
-            estadoDiv.style.color = "#ff4444";
+            estadoDiv.innerText = "[ERROR_CONNECT]";
+            estadoDiv.style.color = "#ff3366";
+            estadoDiv.style.textShadow = "0 0 8px #ff3366";
         };
 
         socket.onclose = () => {
-            estadoDiv.innerText = "(Desconectado)";
-            estadoDiv.style.color = "#ff4444";
+            estadoDiv.innerText = "[OFFLINE]";
+            estadoDiv.style.color = "#ff3366";
+            estadoDiv.style.textShadow = "0 0 8px #ff3366";
         };
 
-        btnTeclado.addEventListener('click', (e) => {
+        // EVENTOS TÁCTILES DIRECTOS EN BOTONES DE ARRIBA
+        btnAyuda.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            haptico.tecla();
+            modalInstrucciones.style.display = 'flex';
+        });
+
+        btnCerrarModal.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            haptico.tecla();
+            modalInstrucciones.style.display = 'none';
+        });
+
+        btnTeclado.addEventListener('touchstart', (e) => {
             e.preventDefault();
             haptico.tecla();
             inputRemoto.focus();
         });
 
-        // CONTROL DE AGARRE Y SOLTAR CON VIBRACIÓN GARANTIZADA
-        btnDrag.addEventListener('click', (e) => {
+        btnDrag.addEventListener('touchstart', (e) => {
             e.preventDefault();
             modo_enganchado = !modo_enganchado;
 
-            if (socket.readyState === WebSocket.OPEN) {
-                if (modo_enganchado) {
-                    haptico.agarre(); // Sientes el enganche fuerte
+            if (modo_enganchado) {
+                haptico.agarre();
+                if (socket.readyState === WebSocket.OPEN) {
                     socket.send(JSON.stringify({ "type": "down" }));
-                    btnDrag.innerText = "🔒 Soltar";
-                    btnDrag.classList.add("activo");
-                } else {
-                    haptico.suelte(); // Sientes claramente cuando suelta
-                    socket.send(JSON.stringify({ "type": "up" }));
-                    btnDrag.innerText = "🔓 Mover";
-                    btnDrag.classList.remove("activo");
                 }
+                btnDrag.innerText = "🔒 Soltar";
+                btnDrag.classList.add("activo");
+            } else {
+                haptico.suelte();
+                if (socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ "type": "up" }));
+                }
+                btnDrag.innerText = "🔓 Mover";
+                btnDrag.classList.remove("activo");
             }
+        });
+
+        // BOTONES MULTIMEDIA TÁCTILES
+        document.querySelectorAll('.btn-media').forEach(boton => {
+            boton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                haptico.tecla();
+                const accion = boton.getAttribute('data-action');
+                if (socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ "type": "media", "action": accion }));
+                }
+            });
         });
 
         inputRemoto.addEventListener('input', (evento) => {

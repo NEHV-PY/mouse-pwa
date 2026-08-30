@@ -1,54 +1,52 @@
-﻿from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, FileResponse
+﻿import asyncio
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import pyautogui
+
+pyautogui.FAILSAFE = False
+pyautogui.PAUSE = 0
 
 app = FastAPI()
 
-pyautogui.PAUSE = 0
-pyautogui.FAILSAFE = False
+app.mount("/static", StaticFiles(directory="."), name="static")
 
 @app.get("/")
-async def get():
-    with open("index.html", "r", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+async def get_index():
+    return FileResponse("index.html")
 
 @app.get("/manifest.json")
-async def manifest():
+async def get_manifest():
     return FileResponse("manifest.json")
 
+@app.get("/sw.js")
+async def get_sw():
+    return FileResponse("sw.js")
+
 @app.websocket("/ws/mouse")
-async def websocket_mouse_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    print("-> ¡Celular Conectado al WebSocket!")
     try:
         while True:
             data = await websocket.receive_json()
-            tipo_evento = data.get("type", "move")
+            tipo = data.get("type")
 
-            if tipo_evento == "move":
-                delta_x = data.get("dx", 0)
-                delta_y = data.get("dy", 0)
-                pyautogui.moveRel(delta_x, delta_y)
-
-            elif tipo_evento == "click":
-                boton = data.get("button", "left")
-                pyautogui.click(button=boton)
-
-            elif tipo_evento == "scroll":
-                delta_y = data.get("dy", 0)
-                pyautogui.scroll(int(delta_y))
-
-            elif tipo_evento == "text":
-                texto = data.get("text", "")
-                if texto:
-                    pyautogui.write(texto)
-
-            elif tipo_evento == "key":
-                key = data.get("key", "")
-                if key == "backspace":
-                    pyautogui.press("backspace")
-                elif key == "enter":
-                    pyautogui.press("enter")
+            if tipo == "move":
+                pyautogui.moveRel(data["dx"], data["dy"])
+            elif tipo == "click":
+                pyautogui.click(button=data["button"])
+            elif tipo == "down":
+                pyautogui.mouseDown(button="left")
+            elif tipo == "up":
+                pyautogui.mouseUp(button="left")
+            elif tipo == "scroll":
+                pyautogui.scroll(int(data["dy"]))
+            elif tipo == "text":
+                pyautogui.write(data["text"])
+            elif tipo == "key":
+                pyautogui.press(data["key"])
+            elif tipo == "media":
+                pyautogui.press(data["action"])
 
     except WebSocketDisconnect:
-        print("-> Celular Desconectado")
+        pass
