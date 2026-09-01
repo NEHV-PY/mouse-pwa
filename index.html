@@ -46,6 +46,7 @@
         <button id="btn-paste">PASTE</button>
         <button id="btn-tab">ALT+TAB</button>
         <button id="btn-desk">DESK</button>
+        <button id="btn-full">FULL</button>
         <button id="btn-sleep" class="danger">SUSPEND</button>
     </div>
 
@@ -77,8 +78,8 @@
 
         const vibrate = () => { if (navigator.vibrate) navigator.vibrate(15); };
 
-        ws.onopen = () => { statusDiv.textContent = "● CONECTADO"; statusDiv.style.color = "#00ffcc"; };
-        ws.onclose = () => { statusDiv.textContent = "○ DESCONECTADO"; statusDiv.style.color = "#ff0055"; };
+        ws.onopen = () => { statusDiv.textContent = "CONECTADO"; statusDiv.style.color = "#00ffcc"; };
+        ws.onclose = () => { statusDiv.textContent = "DESCONECTADO"; statusDiv.style.color = "#ff0055"; };
 
         let lastX = 0, lastY = 0, lastSendTime = 0, isDragging = false;
         let touchStartTime = 0, touchMoved = false;
@@ -146,14 +147,14 @@
             vibrate();
             isDragging = !isDragging;
             dragBtn.classList.toggle("active", isDragging);
-            lockIcon.innerHTML = isDragging 
+            lockIcon.innerHTML = isDragging
                 ? `<path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/>`
                 : `<path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>`;
             ws.send(JSON.stringify({ type: isDragging ? "drag_start" : "drag_end" }));
         };
 
         document.getElementById("btn-keyboard").onclick = () => { vibrate(); hiddenInput.focus(); };
-        
+
         hiddenInput.addEventListener("keydown", (e) => {
             if (e.key === "Backspace") ws.send(JSON.stringify({ type: "key", key: "backspace" }));
         });
@@ -168,6 +169,10 @@
         document.getElementById("btn-paste").onclick = () => { vibrate(); ws.send(JSON.stringify({ type: "hotkey", keys: ["ctrl", "v"] })); };
         document.getElementById("btn-tab").onclick = () => { vibrate(); ws.send(JSON.stringify({ type: "hotkey", keys: ["alt", "tab"] })); };
         document.getElementById("btn-desk").onclick = () => { vibrate(); ws.send(JSON.stringify({ type: "hotkey", keys: ["win", "d"] })); };
+        document.getElementById("btn-full").onclick = () => {
+            vibrate();
+            ws.send(JSON.stringify({ type: "key", key: "f11" }));
+        };
         document.getElementById("btn-sleep").onclick = () => {
             vibrate();
             if (confirm("¿Suspender la PC, mi amor?")) {
