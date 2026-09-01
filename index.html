@@ -40,7 +40,6 @@
         </button>
     </div>
 
-    <!-- PROTOCOLO STARK: Accesos directos y comandos -->
     <div class="stark-bar">
         <button id="btn-copy">COPY</button>
         <button id="btn-paste">PASTE</button>
@@ -52,7 +51,7 @@
 
     <div id="touchpad">
         <div class="mouse-icon"><div class="mouse-wheel"></div></div>
-        <span>PANEL TÁCTIL</span>
+        <span>PANEL TÁCTIL (ZOOM HABILITADO)</span>
     </div>
 
     <div class="media-bar">
@@ -84,7 +83,14 @@
         let lastX = 0, lastY = 0, lastSendTime = 0, isDragging = false;
         let touchStartTime = 0, touchMoved = false;
         let lastTapTime = 0;
+        let initialPinchDistance = null;
         const SEND_INTERVAL = 16, sensitivity = 1.4;
+
+        const getDistance = (t1, t2) => {
+            const dx = t1.clientX - t2.clientX;
+            const dy = t1.clientY - t2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        };
 
         touchpad.addEventListener("touchstart", (e) => {
             touchStartTime = Date.now();
@@ -94,6 +100,7 @@
                 lastY = e.touches[0].clientY;
             } else if (e.touches.length === 2) {
                 lastY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                initialPinchDistance = getDistance(e.touches[0], e.touches[1]);
             }
         });
 
@@ -113,16 +120,28 @@
                     ws.send(JSON.stringify({ type: "move", dx: Math.round(dx), dy: Math.round(dy) }));
                 }
             } else if (e.touches.length === 2) {
-                const currentY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-                const dy = currentY - lastY;
-                lastY = currentY;
-                if (Math.abs(dy) > 2) {
-                    ws.send(JSON.stringify({ type: "scroll", clicks: Math.round(-dy * 2) }));
+                const currentDistance = getDistance(e.touches[0], e.touches[1]);
+                const diff = currentDistance - initialPinchDistance;
+
+                if (Math.abs(diff) > 20) {
+                    const zoomDirection = diff > 0 ? "in" : "out";
+                    ws.send(JSON.stringify({ type: "zoom", direction: zoomDirection }));
+                    initialPinchDistance = currentDistance;
+                } else {
+                    const currentY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                    const dy = currentY - lastY;
+                    lastY = currentY;
+                    if (Math.abs(dy) > 2) {
+                        ws.send(JSON.stringify({ type: "scroll", clicks: Math.round(-dy * 2) }));
+                    }
                 }
             }
         }, { passive: false });
 
         touchpad.addEventListener("touchend", (e) => {
+            if (e.touches.length < 2) {
+                initialPinchDistance = null;
+            }
             const touchDuration = Date.now() - touchStartTime;
             if (!touchMoved && touchDuration < 250 && e.touches.length === 0) {
                 const now = Date.now();
@@ -164,15 +183,11 @@
             hiddenInput.value = "";
         });
 
-        // PROTOCOLO STARK
         document.getElementById("btn-copy").onclick = () => { vibrate(); ws.send(JSON.stringify({ type: "hotkey", keys: ["ctrl", "c"] })); };
         document.getElementById("btn-paste").onclick = () => { vibrate(); ws.send(JSON.stringify({ type: "hotkey", keys: ["ctrl", "v"] })); };
         document.getElementById("btn-tab").onclick = () => { vibrate(); ws.send(JSON.stringify({ type: "hotkey", keys: ["alt", "tab"] })); };
         document.getElementById("btn-desk").onclick = () => { vibrate(); ws.send(JSON.stringify({ type: "hotkey", keys: ["win", "d"] })); };
-        document.getElementById("btn-full").onclick = () => {
-            vibrate();
-            ws.send(JSON.stringify({ type: "key", key: "f11" }));
-        };
+        document.getElementById("btn-full").onclick = () => { vibrate(); ws.send(JSON.stringify({ type: "key", key: "f11" })); };
         document.getElementById("btn-sleep").onclick = () => {
             vibrate();
             if (confirm("¿Suspender la PC, mi amor?")) {
