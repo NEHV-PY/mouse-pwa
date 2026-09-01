@@ -11,14 +11,18 @@
         #status { padding: 4px; text-align: center; font-size: 10px; font-weight: bold; background-color: #121824; color: #ff0055; border-bottom: 1px solid #1a2332; }
         .toolbar { display: flex; gap: 6px; padding: 6px 8px; background: #0f1522; }
         .toolbar button { flex: 1; padding: 8px 4px; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        #touchpad { flex: 1; background: radial-gradient(circle, #161f30 0%, #0f1522 100%); margin: 6px 8px; border-radius: 14px; border: 2px solid #00ffcc33; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #00ffcc55; font-size: 11px; letter-spacing: 1px; }
-        .mouse-icon { width: 32px; height: 48px; border: 2px solid #00ffcc55; border-radius: 16px; position: relative; margin-bottom: 4px; }
+        .stark-bar { display: flex; gap: 4px; padding: 0 8px 6px 8px; background: #0f1522; }
+        .stark-bar button { flex: 1; padding: 6px 2px; font-size: 10px; background: #161f30; border-color: #00ffcc33; color: #00ffcc; }
+        #touchpad { flex: 1; background: radial-gradient(circle, #161f30 0%, #0f1522 100%); margin: 4px 8px; border-radius: 14px; border: 2px solid #00ffcc33; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #00ffcc55; font-size: 11px; letter-spacing: 1px; }
+        .mouse-icon { width: 28px; height: 42px; border: 2px solid #00ffcc55; border-radius: 14px; position: relative; margin-bottom: 4px; }
         .mouse-wheel { width: 4px; height: 8px; background-color: #00ffcc88; border-radius: 2px; position: absolute; top: 6px; left: 50%; transform: translateX(-50%); }
-        .media-bar { display: flex; gap: 4px; padding: 0 8px 6px 8px; }
+        .media-bar { display: flex; gap: 4px; padding: 0 8px 4px 8px; }
         .media-bar button { flex: 1; padding: 8px 2px; background: #161f30; display: flex; align-items: center; justify-content: center; }
         .controls { display: flex; padding: 0 8px calc(6px + env(safe-area-inset-bottom)) 8px; gap: 6px; }
         button { flex: 1; padding: 10px; font-size: 11px; font-weight: bold; background: #121824; color: #00ffcc; border: 1px solid #00ffcc55; border-radius: 8px; cursor: pointer; fill: #00ffcc; }
         button:active, button.active { background-color: #00ffcc; color: #0b0e14; fill: #0b0e14; box-shadow: 0 0 12px #00ffcc; }
+        button.danger { border-color: #ff0055; color: #ff0055; fill: #ff0055; }
+        button.danger:active { background-color: #ff0055; color: #0b0e14; box-shadow: 0 0 12px #ff0055; }
         svg { width: 15px; height: 15px; }
         #hidden-input { position: absolute; opacity: 0; pointer-events: none; }
     </style>
@@ -35,32 +39,29 @@
             TECLADO
         </button>
     </div>
+
+    <!-- PROTOCOLO STARK: Accesos directos y comandos -->
+    <div class="stark-bar">
+        <button id="btn-copy">COPY</button>
+        <button id="btn-paste">PASTE</button>
+        <button id="btn-tab">ALT+TAB</button>
+        <button id="btn-desk">DESK</button>
+        <button id="btn-sleep" class="danger">SUSPEND</button>
+    </div>
+
     <div id="touchpad">
         <div class="mouse-icon"><div class="mouse-wheel"></div></div>
         <span>PANEL TÁCTIL</span>
     </div>
+
     <div class="media-bar">
-        <button id="btn-prev" title="Video Anterior">
-            <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-        </button>
-        <button id="btn-rewind" title="Rebobinar">
-            <svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
-        </button>
-        <button id="btn-voldown" title="Volumen -">
-            <svg viewBox="0 0 24 24"><path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>
-        </button>
-        <button id="btn-play" title="Play/Pausa">
-            <svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-        </button>
-        <button id="btn-volup" title="Volumen +">
-            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-        </button>
-        <button id="btn-forward" title="Adelantar">
-            <svg viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
-        </button>
-        <button id="btn-next" title="Siguiente Video">
-            <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-        </button>
+        <button id="btn-prev"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+        <button id="btn-rewind"><svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
+        <button id="btn-voldown"><svg viewBox="0 0 24 24"><path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg></button>
+        <button id="btn-play"><svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></button>
+        <button id="btn-volup"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
+        <button id="btn-forward"><svg viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
+        <button id="btn-next"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
     </div>
     <div class="controls">
         <button id="btn-left">CLIC IZQ</button>
@@ -115,7 +116,6 @@
                 const dy = currentY - lastY;
                 lastY = currentY;
                 if (Math.abs(dy) > 2) {
-                    // Scroll invertido natural para pantalla táctil
                     ws.send(JSON.stringify({ type: "scroll", clicks: Math.round(-dy * 2) }));
                 }
             }
@@ -126,12 +126,10 @@
             if (!touchMoved && touchDuration < 250 && e.touches.length === 0) {
                 const now = Date.now();
                 if (now - lastTapTime < 300) {
-                    // Doble Tap -> Doble Clic Izquierdo
                     vibrate();
                     ws.send(JSON.stringify({ type: "click", button: "left", clicks: 2 }));
                     lastTapTime = 0;
                 } else {
-                    // Tap Simple -> Clic Izquierdo
                     vibrate();
                     ws.send(JSON.stringify({ type: "click", button: "left", clicks: 1 }));
                     lastTapTime = now;
@@ -157,15 +155,25 @@
         document.getElementById("btn-keyboard").onclick = () => { vibrate(); hiddenInput.focus(); };
         
         hiddenInput.addEventListener("keydown", (e) => {
-            if (e.key === "Backspace") {
-                ws.send(JSON.stringify({ type: "key", key: "backspace" }));
-            }
+            if (e.key === "Backspace") ws.send(JSON.stringify({ type: "key", key: "backspace" }));
         });
 
         hiddenInput.addEventListener("input", (e) => {
             if (e.data) ws.send(JSON.stringify({ type: "text", text: e.data }));
             hiddenInput.value = "";
         });
+
+        // PROTOCOLO STARK
+        document.getElementById("btn-copy").onclick = () => { vibrate(); ws.send(JSON.stringify({ type: "hotkey", keys: ["ctrl", "c"] })); };
+        document.getElementById("btn-paste").onclick = () => { vibrate(); ws.send(JSON.stringify({ type: "hotkey", keys: ["ctrl", "v"] })); };
+        document.getElementById("btn-tab").onclick = () => { vibrate(); ws.send(JSON.stringify({ type: "hotkey", keys: ["alt", "tab"] })); };
+        document.getElementById("btn-desk").onclick = () => { vibrate(); ws.send(JSON.stringify({ type: "hotkey", keys: ["win", "d"] })); };
+        document.getElementById("btn-sleep").onclick = () => {
+            vibrate();
+            if (confirm("¿Suspender la PC, mi amor?")) {
+                ws.send(JSON.stringify({ type: "system", cmd: "sleep" }));
+            }
+        };
 
         document.getElementById("btn-prev").onclick = () => { vibrate(); ws.send(JSON.stringify({ type: "key", key: "prevtrack" })); };
         document.getElementById("btn-rewind").onclick = () => { vibrate(); ws.send(JSON.stringify({ type: "key", key: "left" })); };

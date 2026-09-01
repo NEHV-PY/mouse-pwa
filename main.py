@@ -3,6 +3,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 import json
+import os
 
 pyautogui.FAILSAFE = False
 pyautogui.PAUSE = 0.0
@@ -34,6 +35,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 pyautogui.mouseDown(button="left")
             elif event_type == "drag_end":
                 pyautogui.mouseUp(button="left")
+            elif event_type == "hotkey":
+                keys = event.get("keys", [])
+                if keys:
+                    pyautogui.hotkey(*keys)
             elif event_type == "key":
                 key = event.get("key")
                 if key:
@@ -42,6 +47,12 @@ async def websocket_endpoint(websocket: WebSocket):
                 text = event.get("text")
                 if text:
                     pyautogui.typewrite(text)
+            elif event_type == "system":
+                cmd = event.get("cmd")
+                if cmd == "sleep":
+                    os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
+                elif cmd == "shutdown":
+                    os.system("shutdown /s /t 5")
     except WebSocketDisconnect:
         pass
 
